@@ -45,6 +45,18 @@ interface AppContextType {
   simStep: number;
   setSimStep: React.Dispatch<React.SetStateAction<number>>;
   
+  // Quiz State
+  isQuizMode: boolean;
+  setIsQuizMode: React.Dispatch<React.SetStateAction<boolean>>;
+  currentQuestionIndex: number;
+  setCurrentQuestionIndex: React.Dispatch<React.SetStateAction<number>>;
+  quizSelectedMachineId: string | null;
+  setQuizSelectedMachineId: React.Dispatch<React.SetStateAction<string | null>>;
+  quizSelectedChemicalId: string | null;
+  setQuizSelectedChemicalId: React.Dispatch<React.SetStateAction<string | null>>;
+  quizScore: number;
+  setQuizScore: React.Dispatch<React.SetStateAction<number>>;
+  
   // Authentication State
   currentUser: User | null;
   setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -91,6 +103,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Simulator States
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [simStep, setSimStep] = useState<number>(0);
+
+  // Quiz States
+  const [isQuizMode, setIsQuizMode] = useState<boolean>(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [quizSelectedMachineId, setQuizSelectedMachineId] = useState<string | null>(null);
+  const [quizSelectedChemicalId, setQuizSelectedChemicalId] = useState<string | null>(null);
+  const [quizScore, setQuizScore] = useState<number>(0);
 
   // Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -426,6 +445,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsSimulating,
       simStep,
       setSimStep,
+
+      isQuizMode,
+      setIsQuizMode,
+      currentQuestionIndex,
+      setCurrentQuestionIndex,
+      quizSelectedMachineId,
+      setQuizSelectedMachineId,
+      quizSelectedChemicalId,
+      setQuizSelectedChemicalId,
+      quizScore,
+      setQuizScore,
       
       currentUser,
       setCurrentUser,

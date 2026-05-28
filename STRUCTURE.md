@@ -59,13 +59,18 @@ c:\HAUS\HAUS-Training\
 ## 🕒 2. Lịch sử Nâng cấp (Upgrade History)
 
 *   **V1.00 - V3.43 (Phiên bản cũ)**: Ứng dụng chạy trên tệp đơn HTML độc lập. React, Tailwind và Babel được biên dịch runtime trực tiếp trên trình duyệt. Phù hợp cho việc trình chiếu demo nhanh nhưng không thể bảo mật, không có database thực tế và khó nâng cấp.
-*   **V4.00 - V4.10 (Phiên bản hiện tại)**:
+*   **V4.00 - V4.10 (Phiên bản trung gian)**:
     *   Tái cấu trúc hoàn toàn sang cấu trúc **Vite + React + TypeScript + Tailwind CSS** chuẩn hóa.
     *   Chia mô-đun tệp tin rõ ràng, tối ưu hóa tái sử dụng mã nguồn.
     *   Thiết lập cơ sở dữ liệu **Firestore** đồng bộ thời gian thực cho Máy, Hóa chất, Dụng cụ, Khu vực, Gói dịch vụ và Quy trình liên kết chéo (Mô hình C).
     *   Bảo mật quyền Admin thông qua **Firebase Auth** (đăng nhập Email/Mật khẩu tĩnh).
     *   Bố cục lại màn hình thành **4 cột ngang trực quan** kết hợp hiệu ứng **Particle Flow** kết nối quy trình chuyển động hạt năng lượng dọc theo đường SVG Bezier.
     *   **Tích hợp CRUD Gói dịch vụ & Khu vực**: Hỗ trợ Admin Thêm, Xóa, Sửa đầy đủ 6 danh mục dữ liệu trực tiếp trên bảng điều khiển quản trị, tự đặt ID định danh tùy chọn và chọn màu bằng Colorpicker.
+*   **V4.20 - V4.50 (Phiên bản Hiện tại - Nâng cấp Toàn diện)**:
+    *   **Pha 1 (Đồng bộ hóa chất & Visualizer)**: Hỗ trợ nạp dữ liệu động từ Google Sheets (CSV) qua `.env.local` giúp đồng bộ với NotebookLM. Hiển thị thang đo pH HSL rực rỡ, cốc đong tỷ lệ pha dung dịch 1L trực quan, và các icon bảo hộ an toàn MSDS phát sáng.
+    *   **Pha 2 (Bảng So sánh song song)**: Bổ sung nút `Compare` trên thẻ. Khi chọn đúng 2 máy hoặc 2 hóa chất, bảng Glassmorphism Modal `CompareModal` sẽ trượt lên cho phép so sánh specs trực diện.
+    *   **Pha 3 (Mô phỏng tự động - Simulator)**: Thiết lập thanh điều khiển media (Play, Pause, Skip, Speed) ở đáy màn hình. Simulator tự động chạy luồng Bezier, highlight thẻ hoạt động, và trượt mở InfoPanel tương ứng. Auto-pause khi học viên click thủ công.
+    *   **Pha 4 (Trợ lý Gemini AI)**: Tích hợp trực tiếp REST API Gemini Flash/Pro không phụ thuộc thư viện ngoài (Zero-dependency). Tự động "bơm" toàn bộ dữ liệu máy, hóa chất, dụng cụ vào prompt (Dynamic Context Injection) để AI trả lời chính xác 100%. Tự động fallback chỉ đường đến NotebookLM nếu chưa cấu hình key `VITE_GEMINI_API_KEY`.
 
 ---
 

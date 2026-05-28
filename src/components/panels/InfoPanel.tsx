@@ -376,6 +376,34 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ onClose }) => {
               </div>
             </div>
           )}
+
+          {/* QR Code AR Generator */}
+          {(itemType === 'machine' || itemType === 'chemical') && (
+            <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80 flex flex-col items-center text-center gap-2 mt-2">
+              <h4 className="text-[9px] uppercase font-bold text-slate-400 w-full text-left flex items-center gap-1">
+                <LucideIcon name="QrCode" size={10} className="text-yellow-400" />
+                <span>Liên kết QR Code vật lý</span>
+              </h4>
+              <div className="w-24 h-24 bg-white rounded-lg p-1 flex items-center justify-center shadow-lg border border-white/20 overflow-hidden shrink-0 mt-1">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?${itemType === 'machine' ? 'selectMachine' : 'selectChemical'}=${activeItem.id}` : '')}`} 
+                  className="w-full h-full object-contain" 
+                  alt="QR Code" 
+                />
+              </div>
+              <p className="text-[9px] text-slate-400 leading-tight">
+                Dán mã QR lên thân máy hoặc chai hóa chất thực tế để thắp sáng quy trình ảo này lập tức.
+              </p>
+              <a
+                href={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?${itemType === 'machine' ? 'selectMachine' : 'selectChemical'}=${activeItem.id}` : '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer block text-center"
+              >
+                Mở ảnh QR để in nhãn
+              </a>
+            </div>
+          )}
         </div>
       </div>
 

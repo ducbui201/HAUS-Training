@@ -25,7 +25,9 @@ export const Header: React.FC<HeaderProps> = ({
     setSelectedToolId,
     selectedMachineId,
     mappings,
-    isAdmin
+    isAdmin,
+    isQuizMode,
+    setIsQuizMode
   } = useApp();
 
   const toggleFullScreen = () => {
@@ -146,6 +148,22 @@ export const Header: React.FC<HeaderProps> = ({
             <LucideIcon name="Lock" size={16} />
           </button>
         )}
+
+        {/* Interactive Quiz Check Mode */}
+        <button
+          onClick={() => setIsQuizMode(!isQuizMode)}
+          className={`
+            flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300
+            text-xs font-bold uppercase tracking-wider cursor-pointer
+            ${isQuizMode 
+              ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.6)] scale-105' 
+              : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}
+          `}
+          title="Bắt đầu kiểm tra trắc nghiệm"
+        >
+          <LucideIcon name="ShieldAlert" size={14} />
+          <span className="hidden lg:inline">Kiểm tra</span>
+        </button>
 
         {/* Fullscreen control */}
         <button

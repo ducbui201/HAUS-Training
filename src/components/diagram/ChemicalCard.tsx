@@ -17,8 +17,15 @@ export const ChemicalCard: React.FC<ChemicalCardProps> = ({
   onClick
 }) => {
   const [imgError, setImgError] = useState(false);
-  const { comparedChemicalIds, setComparedChemicalIds } = useApp();
+  const { 
+    comparedChemicalIds, 
+    setComparedChemicalIds,
+    isQuizMode,
+    quizSelectedChemicalId,
+    setQuizSelectedChemicalId
+  } = useApp();
   const isCompared = comparedChemicalIds.includes(chemical.id);
+  const isQuizSelected = isQuizMode && quizSelectedChemicalId === chemical.id;
 
   useEffect(() => {
     setImgError(false);
@@ -40,13 +47,15 @@ export const ChemicalCard: React.FC<ChemicalCardProps> = ({
   return (
     <div
       id={`chemical-${chemical.id}`}
-      onClick={onClick}
+      onClick={isQuizMode ? () => setQuizSelectedChemicalId(chemical.id) : onClick}
       className={`
         machine-card-glass relative flex flex-col items-center text-center p-2 rounded-xl cursor-pointer select-none transition-all duration-300
-        ${isSelected 
-          ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] ring-1 ring-yellow-400 scale-105 z-10 bg-yellow-400/10' 
-          : 'border-slate-800 hover:border-slate-500 hover:scale-102'}
-        ${isFaded ? 'opacity-20 blur-[0.5px] scale-98 hover:opacity-30' : 'opacity-100 scale-100'}
+        ${isQuizSelected
+          ? 'border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)] ring-1 ring-blue-400 scale-105 z-10 bg-blue-500/10'
+          : isSelected 
+            ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] ring-1 ring-yellow-400 scale-105 z-10 bg-yellow-400/10' 
+            : 'border-slate-800 hover:border-slate-500 hover:scale-102'}
+        ${isFaded && !isQuizMode ? 'opacity-20 blur-[0.5px] scale-98 hover:opacity-30' : 'opacity-100 scale-100'}
       `}
       style={{ minHeight: '11vh' }}
     >

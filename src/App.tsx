@@ -13,6 +13,8 @@ import ToolCard from './components/diagram/ToolCard';
 import ConnectionLayer, { type ConnectionLine } from './components/diagram/ConnectionLayer';
 import LucideIcon from './components/ui/LucideIcon';
 import SimulatorControls from './components/panels/SimulatorControls';
+import QuizPanel from './components/panels/QuizPanel';
+import AreaBlueprint from './components/panels/AreaBlueprint';
 
 export const App: React.FC = () => {
   const {
@@ -392,6 +394,21 @@ export const App: React.FC = () => {
     tools
   ]);
 
+  // Parse Query Parameters on load to highlight items from AR scan
+  useEffect(() => {
+    if (loading) return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const selectMachine = params.get('selectMachine');
+    const selectChemical = params.get('selectChemical');
+
+    if (selectMachine) {
+      setSelectedMachineId(selectMachine);
+    } else if (selectChemical) {
+      setSelectedChemicalId(selectChemical);
+    }
+  }, [loading]);
+
   // Global reset click out
   const handleGlobalClick = () => {
     setSelectedMachineId(null);
@@ -632,6 +649,8 @@ export const App: React.FC = () => {
       {/* Interactive Floating / Modal Components */}
       <InfoPanel onClose={() => handleGlobalClick()} />
       <CompareModal />
+      <QuizPanel />
+      <AreaBlueprint />
       <SimulatorControls />
       <AIChat />
       

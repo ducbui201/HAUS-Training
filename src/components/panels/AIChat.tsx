@@ -1,29 +1,98 @@
 import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
 import LucideIcon from '../ui/LucideIcon';
 
 export const AIChat: React.FC = () => {
+  const { machines, chemicals, tools } = useApp();
   const [isOpen, setIsOpen] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, text: "Xin chào! Tôi là trợ lý ảo Karcher. Bạn cần tư vấn về thiết bị, hóa chất hay quy trình làm sạch nào?", sender: 'bot' }
   ]);
   const [input, setInput] = useState('');
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const systemInstruction = `
+Bạn là "Trợ lý Ảo Đào tạo Vận hành Kärcher (HAUS AI Assistant)". Nhiệm vụ của bạn là giải đáp kỹ thuật làm sạch dựa trên dữ liệu thực tế:
+DANH SÁCH THIẾT BỊ:
+${machines.map((m) => `- ${m.name}: ${m.type}. Mô tả: ${m.desc}`).join('\n')}
 
-    // Add user message
-    const userMsg = { id: Date.now(), text: input, sender: 'user' };
+DANH SÁCH HÓA CHẤT:
+${chemicals.map((c) => `- ${c.name}: ${c.type}. pH: ${c.pH}. Tỷ lệ: ${c.dilutionRatio}. Bảo hộ: ${c.safetyMsds?.join(', ') || 'Không có'}. Mô tả: ${c.desc}`).join('\n')}
+
+DANH SÁCH DỤNG CỤ:
+${tools.map((t) => `- ${t.name}: ${t.type}. Mô tả: ${t.desc}`).join('\n')}
+
+HƯỚNG DẪN TRẢ LỜI:
+1. Trả lời cực kỳ ngắn gọn, cô đọng (dưới 4 câu nếu có thể), tập trung vào cốt lõi.
+2. Trả lời bằng tiếng Việt chuyên nghiệp, lịch sự, chuẩn kỹ thuật.
+3. Luôn bám sát các chỉ số pH, tỷ lệ pha loãng, bảo hộ an toàn MSDS thực tế ở trên để tư vấn chính xác.
+`;
+
+  const handleSend = async () => {
+    if (!input.trim() || isThinking) return;
+
+    const userText = input.trim();
+    const userMsg = { id: Date.now(), text: userText, sender: 'user' };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    setIsThinking(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const response = "Tính năng Kärcher AI này đang được kết nối với NotebookLM của HAUS. Vui lòng bấm vào biểu tượng liên kết tròn ở trên nút chat để truy cập nguồn dữ liệu chi tiết của chúng tôi.";
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+    if (!apiKey) {
+      setTimeout(() => {
+        const response = "Chào bạn! Tính năng Kärcher AI hiện tại chưa được kích hoạt khóa VITE_GEMINI_API_KEY trong tệp cấu hình .env.local. Vui lòng thêm khóa để bắt đầu chat trực tiếp, hoặc click vào biểu tượng NotebookLM phía trên để xem tài liệu chi tiết của chúng tôi.";
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, text: response, sender: 'bot' }
+        ]);
+        setIsThinking(false);
+      }, 1000);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: systemInstruction + "\n\nUser Question: " + userText
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Tôi không nhận được phản hồi từ hệ thống AI. Vui lòng thử lại.";
+
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, text: response, sender: 'bot' }
+        { id: Date.now() + 1, text: botText, sender: 'bot' }
       ]);
-    }, 1000);
+    } catch (err) {
+      console.error('Gemini API query failed:', err);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, text: "Lỗi kết nối với máy chủ AI. Vui lòng kiểm tra khóa VITE_GEMINI_API_KEY hoặc đường truyền mạng của bạn.", sender: 'bot' }
+      ]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   const handleNotebookLink = (e: React.MouseEvent) => {
@@ -87,6 +156,14 @@ export const AIChat: React.FC = () => {
                 {msg.text}
               </div>
             ))}
+            {isThinking && (
+              <div className="ai-message bot shadow-md flex items-center gap-1.5 py-2 px-3 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                <span className="text-[10px] text-slate-400 font-bold ml-1">HAUS AI đang xử lý...</span>
+              </div>
+            )}
           </div>
 
           {/* Footer Input Form */}
