@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Chemical } from '../../types';
+import { useApp } from '../../context/AppContext';
+import LucideIcon from '../ui/LucideIcon';
 
 interface ChemicalCardProps {
   chemical: Chemical;
@@ -15,10 +17,25 @@ export const ChemicalCard: React.FC<ChemicalCardProps> = ({
   onClick
 }) => {
   const [imgError, setImgError] = useState(false);
+  const { comparedChemicalIds, setComparedChemicalIds } = useApp();
+  const isCompared = comparedChemicalIds.includes(chemical.id);
 
   useEffect(() => {
     setImgError(false);
   }, [chemical.id]);
+
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setComparedChemicalIds((prev) => {
+      if (prev.includes(chemical.id)) {
+        return prev.filter((id) => id !== chemical.id);
+      }
+      if (prev.length >= 2) {
+        return [prev[0], chemical.id];
+      }
+      return [...prev, chemical.id];
+    });
+  };
 
   return (
     <div
@@ -33,6 +50,19 @@ export const ChemicalCard: React.FC<ChemicalCardProps> = ({
       `}
       style={{ minHeight: '11vh' }}
     >
+      {/* Compare Button */}
+      <button
+        onClick={handleCompareClick}
+        className={`
+          absolute top-1 right-1 w-5 h-5 rounded-md flex items-center justify-center transition-all duration-200 border z-20 cursor-pointer
+          ${isCompared 
+            ? 'bg-yellow-400 border-yellow-300 text-black shadow-[0_0_8px_rgba(250,204,21,0.6)]' 
+            : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:bg-black/60 hover:scale-115'}
+        `}
+        title="So sánh hóa chất này"
+      >
+        <LucideIcon name="GitCompare" size={10} />
+      </button>
       {/* Image Thumbnail */}
       <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
         {imgError ? (

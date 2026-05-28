@@ -33,6 +33,18 @@ interface AppContextType {
   selectedToolId: string | null;
   setSelectedToolId: React.Dispatch<React.SetStateAction<string | null>>;
   
+  // Comparison State
+  comparedMachineIds: string[];
+  setComparedMachineIds: React.Dispatch<React.SetStateAction<string[]>>;
+  comparedChemicalIds: string[];
+  setComparedChemicalIds: React.Dispatch<React.SetStateAction<string[]>>;
+  
+  // Simulator State
+  isSimulating: boolean;
+  setIsSimulating: React.Dispatch<React.SetStateAction<boolean>>;
+  simStep: number;
+  setSimStep: React.Dispatch<React.SetStateAction<number>>;
+  
   // Authentication State
   currentUser: User | null;
   setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -71,6 +83,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
   const [selectedChemicalId, setSelectedChemicalId] = useState<string | null>(null);
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
+
+  // Comparison States
+  const [comparedMachineIds, setComparedMachineIds] = useState<string[]>([]);
+  const [comparedChemicalIds, setComparedChemicalIds] = useState<string[]>([]);
+
+  // Simulator States
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [simStep, setSimStep] = useState<number>(0);
 
   // Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -147,6 +167,93 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     let unsubscribes: (() => void)[] = [];
     let isConnected = true;
+    let isChemicalsLoadedFromSheet = false;
+
+    // Helper to parse CSV
+    const parseCSV = (text: string): Record<string, string>[] => {
+      const lines: string[][] = [];
+      let row: string[] = [''];
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            row[row.length - 1] += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          row.push('');
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+          if (char === '\r' && nextChar === '\n') {
+            i++;
+          }
+          lines.push(row);
+          row = [''];
+        } else {
+          row[row.length - 1] += char;
+        }
+      }
+      if (row.length > 1 || row[0] !== '') {
+        lines.push(row);
+      }
+
+      if (lines.length === 0) return [];
+      const headers = lines[0].map(h => h.trim());
+      
+      return lines.slice(1).map(rowValues => {
+        const obj: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          obj[header] = rowValues[index] ? rowValues[index].trim() : '';
+        });
+        return obj;
+      });
+    };
+
+    const loadChemicalsFromSheet = async (url: string) => {
+      try {
+        console.log('Fetching chemicals from Google Sheet...', url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const csvText = await res.text();
+        const rows = parseCSV(csvText);
+        
+        const parsedChemicals: Chemical[] = rows.map((row) => {
+          const safetyRaw = row.safetyMsds || row.safety_msds || row.msds || '';
+          const safetyMsds = safetyRaw
+            ? safetyRaw.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : [];
+          const pHRaw = row.pH || row.ph || '';
+          const pH = pHRaw ? parseFloat(pHRaw) : undefined;
+          
+          return {
+            id: row.id || '',
+            name: row.name || '',
+            type: row.type || '',
+            image: row.image || '',
+            desc: row.desc || row.description || '',
+            pH: isNaN(pH as number) ? undefined : pH,
+            dilutionRatio: row.dilutionRatio || row.dilution_ratio || row.ratio || undefined,
+            safetyMsds: safetyMsds.length > 0 ? safetyMsds : undefined
+          };
+        }).filter((c) => c.id && c.name);
+
+        if (parsedChemicals.length > 0 && isConnected) {
+          console.log('Successfully loaded chemicals from Google Sheet:', parsedChemicals);
+          setChemicals(parsedChemicals);
+          isChemicalsLoadedFromSheet = true;
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error('Failed to load chemicals from Google Sheet:', err);
+        return false;
+      }
+    };
 
     // A timeout to detect offline/mock environment and switch to static fallback
     const fallbackTimer = setTimeout(() => {
@@ -156,111 +263,131 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setPackages(defaultPackages);
         setAreas(defaultAreas);
         setMachines(defaultMachines);
-        setChemicals(defaultChemicals);
+        if (!isChemicalsLoadedFromSheet) {
+          setChemicals(defaultChemicals);
+        }
         setTools(defaultTools);
         setMappings(defaultMappings);
         setLoading(false);
       }
     }, 4000); // 4 seconds timeout
 
-    try {
-      // Set up real-time listener for Packages
-      const unsubPackages = onSnapshot(collection(db, 'packages'), 
-        (snapshot) => {
-          if (snapshot.empty && isConnected) {
-            // Seed database if we detect everything is empty
-            triggerSeed().catch(err => console.error('Auto seed failed', err));
-          } else {
-            const list: Package[] = [];
-            snapshot.forEach((doc) => list.push(doc.data() as Package));
-            setPackages(list);
+    const initListeners = async () => {
+      const sheetUrl = import.meta.env.VITE_CHEMICALS_SHEET_URL;
+      if (sheetUrl) {
+        const loaded = await loadChemicalsFromSheet(sheetUrl);
+        if (loaded) {
+          isChemicalsLoadedFromSheet = true;
+        }
+      }
+
+      try {
+        // Set up real-time listener for Packages
+        const unsubPackages = onSnapshot(collection(db, 'packages'), 
+          (snapshot) => {
+            if (snapshot.empty && isConnected) {
+              // Seed database if we detect everything is empty
+              triggerSeed().catch(err => console.error('Auto seed failed', err));
+            } else {
+              const list: Package[] = [];
+              snapshot.forEach((doc) => list.push(doc.data() as Package));
+              setPackages(list);
+            }
+          }, 
+          (error) => {
+            console.error('Firestore Packages subscription failed:', error);
+            setUseStaticFallback(true);
           }
-        }, 
-        (error) => {
-          console.error('Firestore Packages subscription failed:', error);
-          setUseStaticFallback(true);
+        );
+        unsubscribes.push(unsubPackages);
+
+        // Areas
+        const unsubAreas = onSnapshot(collection(db, 'areas'), 
+          (snapshot) => {
+            const list: Area[] = [];
+            snapshot.forEach((doc) => list.push(doc.data() as Area));
+            // Keep default sorting order
+            const sorted = list.sort((a, b) => {
+              const indexA = defaultAreas.findIndex(da => da.id === a.id);
+              const indexB = defaultAreas.findIndex(da => da.id === b.id);
+              return (indexA !== -1 ? indexA : 99) - (indexB !== -1 ? indexB : 99);
+            });
+            setAreas(sorted.length > 0 ? sorted : defaultAreas);
+          },
+          (error) => console.error(error)
+        );
+        unsubscribes.push(unsubAreas);
+
+        // Machines
+        const unsubMachines = onSnapshot(collection(db, 'machines'), 
+          (snapshot) => {
+            const list: Machine[] = [];
+            snapshot.forEach((doc) => list.push(doc.data() as Machine));
+            setMachines(list.length > 0 ? list : defaultMachines);
+          },
+          (error) => console.error(error)
+        );
+        unsubscribes.push(unsubMachines);
+
+        // Chemicals (only if NOT loaded from Google Sheet successfully)
+        if (!isChemicalsLoadedFromSheet) {
+          const unsubChemicals = onSnapshot(collection(db, 'chemicals'), 
+            (snapshot) => {
+              if (!isChemicalsLoadedFromSheet) {
+                const list: Chemical[] = [];
+                snapshot.forEach((doc) => list.push(doc.data() as Chemical));
+                setChemicals(list.length > 0 ? list : defaultChemicals);
+              }
+            },
+            (error) => console.error(error)
+          );
+          unsubscribes.push(unsubChemicals);
         }
-      );
-      unsubscribes.push(unsubPackages);
 
-      // Areas
-      const unsubAreas = onSnapshot(collection(db, 'areas'), 
-        (snapshot) => {
-          const list: Area[] = [];
-          snapshot.forEach((doc) => list.push(doc.data() as Area));
-          // Keep default sorting order
-          const sorted = list.sort((a, b) => {
-            const indexA = defaultAreas.findIndex(da => da.id === a.id);
-            const indexB = defaultAreas.findIndex(da => da.id === b.id);
-            return (indexA !== -1 ? indexA : 99) - (indexB !== -1 ? indexB : 99);
-          });
-          setAreas(sorted.length > 0 ? sorted : defaultAreas);
-        },
-        (error) => console.error(error)
-      );
-      unsubscribes.push(unsubAreas);
+        // Tools
+        const unsubTools = onSnapshot(collection(db, 'tools'), 
+          (snapshot) => {
+            const list: Tool[] = [];
+            snapshot.forEach((doc) => list.push(doc.data() as Tool));
+            setTools(list.length > 0 ? list : defaultTools);
+          },
+          (error) => console.error(error)
+        );
+        unsubscribes.push(unsubTools);
 
-      // Machines
-      const unsubMachines = onSnapshot(collection(db, 'machines'), 
-        (snapshot) => {
-          const list: Machine[] = [];
-          snapshot.forEach((doc) => list.push(doc.data() as Machine));
-          setMachines(list.length > 0 ? list : defaultMachines);
-        },
-        (error) => console.error(error)
-      );
-      unsubscribes.push(unsubMachines);
+        // Mappings
+        const unsubMappings = onSnapshot(collection(db, 'mappings'), 
+          (snapshot) => {
+            const list: MappingRecord[] = [];
+            snapshot.forEach((doc) => list.push(doc.data() as MappingRecord));
+            setMappings(list.length > 0 ? list : defaultMappings);
+            setLoading(false);
+            clearTimeout(fallbackTimer);
+          },
+          (error) => {
+            console.error(error);
+            setUseStaticFallback(true);
+          }
+        );
+        unsubscribes.push(unsubMappings);
 
-      // Chemicals
-      const unsubChemicals = onSnapshot(collection(db, 'chemicals'), 
-        (snapshot) => {
-          const list: Chemical[] = [];
-          snapshot.forEach((doc) => list.push(doc.data() as Chemical));
-          setChemicals(list.length > 0 ? list : defaultChemicals);
-        },
-        (error) => console.error(error)
-      );
-      unsubscribes.push(unsubChemicals);
-
-      // Tools
-      const unsubTools = onSnapshot(collection(db, 'tools'), 
-        (snapshot) => {
-          const list: Tool[] = [];
-          snapshot.forEach((doc) => list.push(doc.data() as Tool));
-          setTools(list.length > 0 ? list : defaultTools);
-        },
-        (error) => console.error(error)
-      );
-      unsubscribes.push(unsubTools);
-
-      // Mappings
-      const unsubMappings = onSnapshot(collection(db, 'mappings'), 
-        (snapshot) => {
-          const list: MappingRecord[] = [];
-          snapshot.forEach((doc) => list.push(doc.data() as MappingRecord));
-          setMappings(list.length > 0 ? list : defaultMappings);
-          setLoading(false);
-          clearTimeout(fallbackTimer);
-        },
-        (error) => {
-          console.error(error);
-          setUseStaticFallback(true);
+      } catch (err) {
+        console.error('Failed to set up Firestore listeners, using fallback:', err);
+        setUseStaticFallback(true);
+        setPackages(defaultPackages);
+        setAreas(defaultAreas);
+        setMachines(defaultMachines);
+        if (!isChemicalsLoadedFromSheet) {
+          setChemicals(defaultChemicals);
         }
-      );
-      unsubscribes.push(unsubMappings);
+        setTools(defaultTools);
+        setMappings(defaultMappings);
+        setLoading(false);
+        clearTimeout(fallbackTimer);
+      }
+    };
 
-    } catch (err) {
-      console.error('Failed to set up Firestore listeners, using fallback:', err);
-      setUseStaticFallback(true);
-      setPackages(defaultPackages);
-      setAreas(defaultAreas);
-      setMachines(defaultMachines);
-      setChemicals(defaultChemicals);
-      setTools(defaultTools);
-      setMappings(defaultMappings);
-      setLoading(false);
-      clearTimeout(fallbackTimer);
-    }
+    initListeners();
 
     return () => {
       isConnected = false;
@@ -289,6 +416,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setSelectedChemicalId,
       selectedToolId,
       setSelectedToolId,
+
+      comparedMachineIds,
+      setComparedMachineIds,
+      comparedChemicalIds,
+      setComparedChemicalIds,
+      
+      isSimulating,
+      setIsSimulating,
+      simStep,
+      setSimStep,
       
       currentUser,
       setCurrentUser,

@@ -5,12 +5,14 @@ import AIChat from './components/panels/AIChat';
 import InfoPanel from './components/panels/InfoPanel';
 import LoginModal from './components/panels/LoginModal';
 import ConfigPanel from './components/panels/ConfigPanel';
+import CompareModal from './components/panels/CompareModal';
 import AreaCard from './components/diagram/AreaCard';
 import MachineCard from './components/diagram/MachineCard';
 import ChemicalCard from './components/diagram/ChemicalCard';
 import ToolCard from './components/diagram/ToolCard';
 import ConnectionLayer, { type ConnectionLine } from './components/diagram/ConnectionLayer';
 import LucideIcon from './components/ui/LucideIcon';
+import SimulatorControls from './components/panels/SimulatorControls';
 
 export const App: React.FC = () => {
   const {
@@ -31,6 +33,7 @@ export const App: React.FC = () => {
     setSelectedChemicalId,
     selectedToolId,
     setSelectedToolId,
+    setIsSimulating
   } = useApp();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -395,6 +398,7 @@ export const App: React.FC = () => {
     setSelectedChemicalId(null);
     setSelectedToolId(null);
     setHoveredArea(null);
+    setIsSimulating(false);
   };
 
   if (loading) {
@@ -536,6 +540,7 @@ export const App: React.FC = () => {
                       setHoveredArea(null);
                       setSelectedChemicalId(null);
                       setSelectedToolId(null);
+                      setIsSimulating(false);
                     }}
                   />
                 );
@@ -574,6 +579,7 @@ export const App: React.FC = () => {
                       setHoveredArea(null);
                       setSelectedMachineId(null);
                       setSelectedToolId(null);
+                      setIsSimulating(false);
                     }}
                   />
                 );
@@ -612,6 +618,7 @@ export const App: React.FC = () => {
                       setHoveredArea(null);
                       setSelectedMachineId(null);
                       setSelectedChemicalId(null);
+                      setIsSimulating(false);
                     }}
                   />
                 );
@@ -624,6 +631,8 @@ export const App: React.FC = () => {
 
       {/* Interactive Floating / Modal Components */}
       <InfoPanel onClose={() => handleGlobalClick()} />
+      <CompareModal />
+      <SimulatorControls />
       <AIChat />
       
       {/* Admin Control Modals */}

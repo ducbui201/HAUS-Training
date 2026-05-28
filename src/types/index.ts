@@ -12,6 +12,9 @@ export interface Chemical {
   type: string;
   image: string;
   desc: string;
+  pH?: number;
+  dilutionRatio?: string;
+  safetyMsds?: string[];
 }
 
 export interface Tool {

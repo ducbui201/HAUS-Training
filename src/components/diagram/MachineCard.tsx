@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Machine } from '../../types';
+import { useApp } from '../../context/AppContext';
+import LucideIcon from '../ui/LucideIcon';
 
 interface MachineCardProps {
   machine: Machine;
@@ -21,10 +23,25 @@ export const MachineCard: React.FC<MachineCardProps> = ({
   onClick
 }) => {
   const [imgError, setImgError] = useState(false);
+  const { comparedMachineIds, setComparedMachineIds } = useApp();
+  const isCompared = comparedMachineIds.includes(machine.id);
 
   useEffect(() => {
     setImgError(false);
   }, [machine.id]);
+
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setComparedMachineIds((prev) => {
+      if (prev.includes(machine.id)) {
+        return prev.filter((id) => id !== machine.id);
+      }
+      if (prev.length >= 2) {
+        return [prev[0], machine.id];
+      }
+      return [...prev, machine.id];
+    });
+  };
 
   return (
     <div
@@ -40,6 +57,19 @@ export const MachineCard: React.FC<MachineCardProps> = ({
       `}
       style={{ minHeight: '11vh' }}
     >
+      {/* Compare Button */}
+      <button
+        onClick={handleCompareClick}
+        className={`
+          absolute top-1 right-1 w-5 h-5 rounded-md flex items-center justify-center transition-all duration-200 border z-20 cursor-pointer
+          ${isCompared 
+            ? 'bg-yellow-400 border-yellow-300 text-black shadow-[0_0_8px_rgba(250,204,21,0.6)]' 
+            : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:bg-black/60 hover:scale-115'}
+        `}
+        title="So sánh thiết bị này"
+      >
+        <LucideIcon name="GitCompare" size={10} />
+      </button>
       {/* Image Thumbnail Container */}
       <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
         {imgError ? (

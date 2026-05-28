@@ -6,6 +6,161 @@ interface InfoPanelProps {
   onClose: () => void;
 }
 
+// Helper to render pH Scale
+const renderPHScale = (pH: number) => {
+  const clampedPH = Math.max(0, Math.min(14, pH));
+  const percent = (clampedPH / 14) * 100;
+  
+  let typeText = 'Trung tính';
+  let textColor = 'text-green-400';
+  if (clampedPH < 6.5) {
+    typeText = clampedPH < 3 ? 'Axit mạnh' : 'Axit nhẹ';
+    textColor = 'text-red-400';
+  } else if (clampedPH > 7.5) {
+    typeText = clampedPH > 11 ? 'Kiềm mạnh' : 'Kiềm nhẹ';
+    textColor = 'text-purple-400';
+  }
+
+  return (
+    <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80">
+      <h4 className="text-[10px] uppercase font-bold text-slate-400 mb-2 flex items-center justify-between">
+        <span className="flex items-center gap-1">
+          <LucideIcon name="Activity" size={11} className="text-yellow-400" />
+          Độ pH Hóa chất
+        </span>
+        <span className={`font-black text-xs ${textColor}`}>pH {pH} - {typeText}</span>
+      </h4>
+      <div className="relative h-2.5 w-full rounded-full bg-gradient-to-r from-red-500 via-orange-400 via-yellow-300 via-green-500 via-cyan-400 via-blue-500 to-purple-600 shadow-inner">
+        <div 
+          className="absolute -top-1 w-2.5 h-4.5 bg-white border border-black/40 rounded-sm shadow-md transition-all duration-500 ease-out transform -translate-x-1/2 filter drop-shadow-[0_0_4px_rgba(255,255,255,0.8)]"
+          style={{ left: `${percent}%` }}
+        >
+          <div className="w-full h-1/2 bg-yellow-400 rounded-t-sm"></div>
+        </div>
+      </div>
+      <div className="flex justify-between text-[8px] text-slate-500 mt-1 font-bold">
+        <span>0 (Axit)</span>
+        <span>7 (Trung tính)</span>
+        <span>14 (Kiềm)</span>
+      </div>
+    </div>
+  );
+};
+
+// Helper to render Dilution Ratio
+const renderDilutionRatio = (ratio: string) => {
+  const parts = ratio.split(':');
+  let divisor = 100;
+  if (parts.length === 2) {
+    const parsed = parseFloat(parts[1]);
+    if (!isNaN(parsed) && parsed > 0) divisor = parsed;
+  }
+
+  const chemVol = 1000 / (divisor + 1);
+  const waterVol = 1000 - chemVol;
+
+  const visualChemHeight = Math.max(8, Math.min(45, (1 / (divisor + 1)) * 100 * 3));
+
+  return (
+    <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80">
+      <h4 className="text-[10px] uppercase font-bold text-slate-400 mb-2 flex items-center gap-1">
+        <LucideIcon name="Droplets" size={11} className="text-yellow-400" />
+        <span>Tỷ lệ pha loãng khuyên dùng ({ratio})</span>
+      </h4>
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-16 bg-white/5 border-2 border-white/20 rounded-b-xl rounded-t-sm relative overflow-hidden flex flex-col justify-end shadow-inner shrink-0">
+          <div className="absolute left-0 right-0 top-1/4 border-t border-white/10 text-[6px] pl-1 text-white/30">750ml</div>
+          <div className="absolute left-0 right-0 top-2/4 border-t border-white/10 text-[6px] pl-1 text-white/30">500ml</div>
+          <div className="absolute left-0 right-0 top-3/4 border-t border-white/10 text-[6px] pl-1 text-white/30">250ml</div>
+
+          <div className="w-full bg-blue-500/40 relative flex-1 transition-all duration-500">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-blue-400/60"></div>
+          </div>
+
+          <div 
+            className="w-full bg-yellow-400/70 border-t border-yellow-300 relative transition-all duration-500 shrink-0" 
+            style={{ height: `${visualChemHeight}%` }}
+          >
+            <div className="absolute -top-[1px] left-0 right-0 h-[2px] bg-yellow-200"></div>
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-1 text-[11px] leading-tight">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Dung dịch tiêu chuẩn:</span>
+            <span className="font-bold text-white">1 Lít (1000ml)</span>
+          </div>
+          <div className="flex items-center justify-between text-blue-300 font-medium">
+            <span>💧 Nước sạch:</span>
+            <span>{waterVol.toFixed(0)} ml</span>
+          </div>
+          <div className="flex items-center justify-between text-yellow-300 font-semibold">
+            <span>🧪 Hóa chất:</span>
+            <span>{chemVol.toFixed(1)} ml</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Helper to render Safety guidelines
+const renderSafetyMsds = (items: string[]) => {
+  const safetyMap: Record<string, { label: string; icon: string; bg: string; border: string; text: string }> = {
+    gloves: {
+      label: 'Găng tay',
+      icon: 'Shield',
+      bg: 'bg-orange-500/10',
+      border: 'border-orange-500/30',
+      text: 'text-orange-400'
+    },
+    goggles: {
+      label: 'Kính bảo hộ',
+      icon: 'Eye',
+      bg: 'bg-red-500/10',
+      border: 'border-red-500/30',
+      text: 'text-red-400'
+    },
+    mask: {
+      label: 'Khẩu trang',
+      icon: 'Wind',
+      bg: 'bg-cyan-500/10',
+      border: 'border-cyan-500/30',
+      text: 'text-cyan-400'
+    }
+  };
+
+  return (
+    <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80">
+      <h4 className="text-[10px] uppercase font-bold text-slate-400 mb-2 flex items-center gap-1">
+        <LucideIcon name="ShieldAlert" size={11} className="text-yellow-400" />
+        <span>Bảo hộ bắt buộc (MSDS)</span>
+      </h4>
+      <div className="grid grid-cols-3 gap-2">
+        {items.map((item) => {
+          const cfg = safetyMap[item.toLowerCase().trim()] || {
+            label: item,
+            icon: 'AlertTriangle',
+            bg: 'bg-slate-800',
+            border: 'border-slate-700',
+            text: 'text-slate-300'
+          };
+
+          return (
+            <div 
+              key={item} 
+              className={`flex flex-col items-center justify-center p-2 rounded-xl border ${cfg.bg} ${cfg.border} text-center space-y-1 transition-all duration-300 hover:scale-105 hover:shadow-md`}
+            >
+              <LucideIcon name={cfg.icon} size={16} className={cfg.text} />
+              <span className={`text-[8px] font-black uppercase tracking-wider ${cfg.text}`}>{cfg.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const InfoPanel: React.FC<InfoPanelProps> = ({ onClose }) => {
   const {
     selectedMachineId,
@@ -110,6 +265,15 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ onClose }) => {
           </h4>
           <p className="text-slate-300 leading-relaxed text-xs">{itemDescription}</p>
         </div>
+
+        {/* Advanced Chemical Indicators */}
+        {itemType === 'chemical' && activeChemical && (
+          <>
+            {activeChemical.pH !== undefined && renderPHScale(activeChemical.pH)}
+            {activeChemical.dilutionRatio && renderDilutionRatio(activeChemical.dilutionRatio)}
+            {activeChemical.safetyMsds && activeChemical.safetyMsds.length > 0 && renderSafetyMsds(activeChemical.safetyMsds)}
+          </>
+        )}
 
         {/* Dynamic Contextual Frequency */}
         {itemFrequency && (
