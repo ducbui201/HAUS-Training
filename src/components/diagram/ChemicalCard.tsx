@@ -22,7 +22,8 @@ export const ChemicalCard: React.FC<ChemicalCardProps> = ({
     setComparedChemicalIds,
     isQuizMode,
     quizSelectedChemicalId,
-    setQuizSelectedChemicalId
+    setQuizSelectedChemicalId,
+    showImages
   } = useApp();
   const isCompared = comparedChemicalIds.includes(chemical.id);
   const isQuizSelected = isQuizMode && quizSelectedChemicalId === chemical.id;
@@ -73,19 +74,25 @@ export const ChemicalCard: React.FC<ChemicalCardProps> = ({
         <LucideIcon name="GitCompare" size={10} />
       </button>
       {/* Image Thumbnail */}
-      <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
-        {imgError ? (
-          <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Hóa Chất</span>
-        ) : (
-          <img
-            src={chemical.image}
-            onError={() => setImgError(true)}
-            className="w-full h-full object-contain"
-            alt={chemical.name}
-            loading="lazy"
-          />
-        )}
-      </div>
+      {showImages ? (
+        <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
+          {imgError ? (
+            <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Hóa Chất</span>
+          ) : (
+            <img
+              src={chemical.image}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-contain"
+              alt={chemical.name}
+              loading="lazy"
+            />
+          )}
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20 shrink-0">
+          <LucideIcon name="Droplet" size={16} />
+        </div>
+      )}
 
       {/* Code Name */}
       <h4 

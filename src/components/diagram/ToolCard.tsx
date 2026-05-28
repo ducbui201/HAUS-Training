@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Tool } from '../../types';
+import { useApp } from '../../context/AppContext';
+import LucideIcon from '../ui/LucideIcon';
 
 interface ToolCardProps {
   tool: Tool;
@@ -15,6 +17,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
   onClick
 }) => {
   const [imgError, setImgError] = useState(false);
+  const { showImages } = useApp();
 
   useEffect(() => {
     setImgError(false);
@@ -34,19 +37,25 @@ export const ToolCard: React.FC<ToolCardProps> = ({
       style={{ minHeight: '11vh' }}
     >
       {/* Image Thumbnail */}
-      <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
-        {imgError ? (
-          <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Dụng Cụ</span>
-        ) : (
-          <img
-            src={tool.image}
-            onError={() => setImgError(true)}
-            className="w-full h-full object-contain"
-            alt={tool.name}
-            loading="lazy"
-          />
-        )}
-      </div>
+      {showImages ? (
+        <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
+          {imgError ? (
+            <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Dụng Cụ</span>
+          ) : (
+            <img
+              src={tool.image}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-contain"
+              alt={tool.name}
+              loading="lazy"
+            />
+          )}
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20 shrink-0">
+          <LucideIcon name="Hammer" size={16} />
+        </div>
+      )}
 
       {/* Code Name */}
       <h4 

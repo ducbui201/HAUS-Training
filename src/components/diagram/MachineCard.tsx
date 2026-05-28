@@ -28,7 +28,8 @@ export const MachineCard: React.FC<MachineCardProps> = ({
     setComparedMachineIds,
     isQuizMode,
     quizSelectedMachineId,
-    setQuizSelectedMachineId
+    setQuizSelectedMachineId,
+    showImages
   } = useApp();
   const isCompared = comparedMachineIds.includes(machine.id);
   const isQuizSelected = isQuizMode && quizSelectedMachineId === machine.id;
@@ -80,19 +81,25 @@ export const MachineCard: React.FC<MachineCardProps> = ({
         <LucideIcon name="GitCompare" size={10} />
       </button>
       {/* Image Thumbnail Container */}
-      <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
-        {imgError ? (
-          <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Karcher</span>
-        ) : (
-          <img
-            src={machine.image}
-            onError={() => setImgError(true)}
-            className="w-full h-full object-contain"
-            alt={machine.name}
-            loading="lazy"
-          />
-        )}
-      </div>
+      {showImages ? (
+        <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
+          {imgError ? (
+            <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Karcher</span>
+          ) : (
+            <img
+              src={machine.image}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-contain"
+              alt={machine.name}
+              loading="lazy"
+            />
+          )}
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-lg bg-yellow-400/10 flex items-center justify-center text-yellow-400 border border-yellow-400/20 shrink-0">
+          <LucideIcon name="Wrench" size={16} />
+        </div>
+      )}
 
       {/* Code Name */}
       <h4 

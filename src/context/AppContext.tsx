@@ -63,6 +63,18 @@ interface AppContextType {
   isAdmin: boolean;
   setIsAdmin: React.Dispatch<React.SetStateAction<boolean>>;
   
+  // Tweaks State for UI/UX Customize
+  tone: 'navy' | 'ivory';
+  setTone: React.Dispatch<React.SetStateAction<'navy' | 'ivory'>>;
+  lineStyle: 'bezier-star' | 'straight' | 'static';
+  setLineStyle: React.Dispatch<React.SetStateAction<'bezier-star' | 'straight' | 'static'>>;
+  density: 'compact' | 'standard' | 'spacious';
+  setDensity: React.Dispatch<React.SetStateAction<'compact' | 'standard' | 'spacious'>>;
+  showImages: boolean;
+  setShowImages: React.Dispatch<React.SetStateAction<boolean>>;
+  speaker: boolean;
+  setSpeaker: React.Dispatch<React.SetStateAction<boolean>>;
+
   // Trigger re-seed manually if needed
   triggerSeed: () => Promise<void>;
   useStaticFallback: boolean;
@@ -114,6 +126,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Tweaks States
+  const [tone, setTone] = useState<'navy' | 'ivory'>('navy');
+  const [lineStyle, setLineStyle] = useState<'bezier-star' | 'straight' | 'static'>('bezier-star');
+  const [density, setDensity] = useState<'compact' | 'standard' | 'spacious'>('standard');
+  const [showImages, setShowImages] = useState<boolean>(true);
+  const [speaker, setSpeaker] = useState<boolean>(false);
 
   // 1. Monitor Authentication State
   useEffect(() => {
@@ -461,6 +480,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCurrentUser,
       isAdmin,
       setIsAdmin,
+
+      // Tweaks UI States
+      tone,
+      setTone,
+      lineStyle,
+      setLineStyle,
+      density,
+      setDensity,
+      showImages,
+      setShowImages,
+      speaker,
+      setSpeaker,
+
       triggerSeed,
       useStaticFallback
     }}>

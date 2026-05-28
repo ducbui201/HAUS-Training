@@ -15,6 +15,7 @@ import LucideIcon from './components/ui/LucideIcon';
 import SimulatorControls from './components/panels/SimulatorControls';
 import QuizPanel from './components/panels/QuizPanel';
 import AreaBlueprint from './components/panels/AreaBlueprint';
+import TweaksPanel from './components/panels/TweaksPanel';
 
 export const App: React.FC = () => {
   const {
@@ -35,7 +36,10 @@ export const App: React.FC = () => {
     setSelectedChemicalId,
     selectedToolId,
     setSelectedToolId,
-    setIsSimulating
+    setIsSimulating,
+    tone,
+    speaker,
+    density
   } = useApp();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -442,7 +446,11 @@ export const App: React.FC = () => {
   return (
     <div 
       onClick={handleGlobalClick} 
-      className="text-slate-200 h-screen w-screen flex flex-col overflow-hidden relative select-none bg-gradient-to-br from-[#000428] to-[#004e92]"
+      className={`stage text-slate-200 h-screen w-screen flex flex-col overflow-hidden relative select-none transition-all duration-300
+        ${tone === 'ivory' ? 'tone-ivory text-slate-900' : 'bg-gradient-to-br from-[#000428] to-[#004e92]'}
+        ${speaker ? 'speaker' : ''}
+        ${density === 'compact' ? 'density-compact' : density === 'spacious' ? 'density-spacious' : ''}
+      `}
     >
       {/* Dynamic Animated Blur Blobs */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -653,6 +661,7 @@ export const App: React.FC = () => {
       <AreaBlueprint />
       <SimulatorControls />
       <AIChat />
+      <TweaksPanel />
       
       {/* Admin Control Modals */}
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
