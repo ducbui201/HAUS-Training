@@ -1,0 +1,69 @@
+import React, { useState, useEffect } from 'react';
+import type { Chemical } from '../../types';
+
+interface ChemicalCardProps {
+  chemical: Chemical;
+  isFaded: boolean;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+export const ChemicalCard: React.FC<ChemicalCardProps> = ({
+  chemical,
+  isFaded,
+  isSelected,
+  onClick
+}) => {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [chemical.id]);
+
+  return (
+    <div
+      id={`chemical-${chemical.id}`}
+      onClick={onClick}
+      className={`
+        machine-card-glass relative flex flex-col items-center text-center p-2 rounded-xl cursor-pointer select-none transition-all duration-300
+        ${isSelected 
+          ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] ring-1 ring-yellow-400 scale-105 z-10 bg-yellow-400/10' 
+          : 'border-slate-800 hover:border-slate-500 hover:scale-102'}
+        ${isFaded ? 'opacity-20 blur-[0.5px] scale-98 hover:opacity-30' : 'opacity-100 scale-100'}
+      `}
+      style={{ minHeight: '11vh' }}
+    >
+      {/* Image Thumbnail */}
+      <div className="w-10 h-10 bg-white rounded-lg p-0.5 flex items-center justify-center shadow-md shrink-0 relative overflow-hidden">
+        {imgError ? (
+          <span className="text-[9px] font-bold text-slate-400 uppercase select-none">Hóa Chất</span>
+        ) : (
+          <img
+            src={chemical.image}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-contain"
+            alt={chemical.name}
+            loading="lazy"
+          />
+        )}
+      </div>
+
+      {/* Code Name */}
+      <h4 
+        className={`
+          text-[1.3vmin] font-black leading-tight mt-1.5 truncate w-full px-1 transition-colors duration-300
+          ${isSelected ? 'text-yellow-300' : 'text-slate-100'}
+        `}
+      >
+        {chemical.name}
+      </h4>
+      
+      {/* Category Type */}
+      <span className="text-[1vmin] truncate w-full px-1 text-slate-400 mt-0.5 leading-none">
+        {chemical.type}
+      </span>
+    </div>
+  );
+};
+
+export default ChemicalCard;

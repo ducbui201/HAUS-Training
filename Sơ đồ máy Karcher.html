@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sơ đồ tư duy máy Karcher (V3.43 - AI Link Right Side)</title>
+    
+    <!-- 1. Cài đặt Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Cài đặt React và ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 3. Cài đặt Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Style tùy chỉnh -->
+    <style>
+        :root {
+            --bg-deep: #000428;
+            --bg-mid: #004e92;
+            --accent-yellow: #FFED00;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --glass-bg: rgba(0, 78, 146, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow: hidden; 
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
+            font-size: 1.4vmin;
+        }
+
+        /* Animated Background */
+        .bg-animated {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+            overflow: hidden;
+        }
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.3;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .blob-1 { top: -20%; left: -10%; width: 70vw; height: 70vw; background: #004e92; animation-duration: 30s; }
+        .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: #000428; animation-duration: 35s; animation-direction: alternate-reverse; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 60px) scale(1.05); }
+        }
+        
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .machine-card-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .machine-card-glass:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Logo Style */
+        .karcher-logo-box {
+            background-color: var(--accent-yellow);
+            color: #000;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            padding: 2px 10px;
+            font-size: 1.4rem;
+            line-height: 1;
+            border-radius: 2px;
+            display: inline-block;
+            transform: skew(-12deg);
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.4);
+        }
+        .karcher-logo-box span { display: inline-block; transform: skew(12deg); }
+
+        /* Flow Line */
+        @keyframes flow {
+            to { stroke-dashoffset: 0; }
+        }
+        .flow-line {
+            stroke-dasharray: 6, 6;
+            stroke-dashoffset: 24;
+            animation: flow 1s linear infinite; 
+            filter: drop-shadow(0 0 4px var(--accent-yellow));
+        }
+
+        /* Highlight */
+        .special-highlight {
+            box-shadow: 0 0 0 1px var(--accent-yellow), 0 0 15px rgba(255, 237, 0, 0.4);
+            border-color: var(--accent-yellow) !important;
+            z-index: 10;
+            background: rgba(255, 237, 0, 0.1) !important;
+        }
+        
+        .area-selected {
+            background: rgba(255, 237, 0, 0.2) !important;
+            border-color: var(--accent-yellow) !important;
+            box-shadow: 0 0 15px rgba(255, 237, 0, 0.2);
+        }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        /* Text Utilities */
+        .text-fluid-title { font-size: clamp(1rem, 2vmin, 1.8rem); }
+        .text-machine-code { 
+            font-size: 1.4vmin; 
+            font-weight: 800; 
+            color: #FFED00; 
+            letter-spacing: 0.03em; 
+            margin-top: 6px; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8); 
+        } 
+        .text-machine-name { 
+            font-size: 1vmin; 
+            font-weight: 500; 
+            color: #ffffff; 
+            line-height: 1.2; 
+            margin-top: 2px; 
+            opacity: 0.9;
+        }
+        .text-accent-yellow { color: #FFED00; }
+        
+        /* Fixed Description Bar */
+        .desc-bar {
+            background: rgba(0, 4, 40, 0.6);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        /* AI Chat Window Styles */
+        .ai-chat-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px; /* Right side */
+            width: 350px;
+            height: 450px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 237, 0, 0.3);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 100;
+            overflow: hidden;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .ai-header {
+            background: linear-gradient(90deg, #FFED00, #F59E0B);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #000;
+        }
+        
+        .ai-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .ai-message {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 1.3vmin;
+            line-height: 1.4;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .ai-message.bot {
+            background: rgba(255,255,255,0.15);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            color: #fff;
+        }
+        
+        .ai-message.user {
+            background: rgba(255, 237, 0, 0.2);
+            border: 1px solid rgba(255, 237, 0, 0.3);
+            color: #FFED00;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .ai-footer {
+            padding: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            gap: 8px;
+        }
+
+        .ai-btn-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px; /* Right side */
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFED00, #F59E0B);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(250, 204, 21, 0.4);
+            z-index: 90;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #000;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .ai-btn-float:hover { transform: scale(1.1) rotate(5deg); }
+        
+        .ai-link-btn {
+            position: absolute;
+            top: -10px;
+            left: -10px; /* Left side of the main button */
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 91;
+            transition: transform 0.2s;
+        }
+        .ai-link-btn:hover { transform: scale(1.2); }
+
+        /* Fullscreen button at bottom left */
+        .fullscreen-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 90;
+            background: rgba(15, 23, 42, 0.8);
+            color: #cbd5e1;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .fullscreen-btn:hover { background: rgba(30, 41, 59, 1); color: #fff; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        /* Animation */
+        .animate-slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="text-slate-200 h-screen flex flex-col">
+
+    <!-- Animated Background -->
+    <div class="bg-animated">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+    </div>
+
+    <div id="root" class="h-full flex flex-col relative z-10"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- ICON COMPONENTS ---
+        const IconWrapper = ({ children, color = "currentColor", size = 18, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            Sparkles: (props) => <IconWrapper {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/></IconWrapper>,
+            Briefcase: (props) => <IconWrapper {...props}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></IconWrapper>,
+            HardHat: (props) => <IconWrapper {...props}><path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6h0"/><path d="M14 6h0a6 6 0 0 1 6 6v3"/></IconWrapper>,
+            Leaf: (props) => <IconWrapper {...props}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 .5 3.5-1.1 9.2A7 7 0 0 1 11 20Z"/><path d="m8 2 1.6 1.6"/></IconWrapper>,
+            Clock: (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>,
+            ArrowRight: (props) => <IconWrapper {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconWrapper>,
+            FallbackMachine: (props) => <IconWrapper {...props}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="12" cy="12" r="5"/><path d="M12 12v6"/></IconWrapper>,
+            Home: (props) => <IconWrapper {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconWrapper>,
+            Utensils: (props) => <IconWrapper {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></IconWrapper>,
+            Bath: (props) => <IconWrapper {...props}><path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-1h-1"/><path d="M9 6h11a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5"/><line x1="10" x2="8" y1="5" y2="7"/><line x1="2" x2="22" y1="12" y2="12"/><line x1="7" x2="7" y1="19" y2="21"/><line x1="17" x2="17" y1="19" y2="21"/></IconWrapper>,
+            TrendingUp: (props) => <IconWrapper {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconWrapper>,
+            Maximize: (props) => <IconWrapper {...props}><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></IconWrapper>,
+            Layers: (props) => <IconWrapper {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></IconWrapper>,
+            Sun: (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></IconWrapper>,
+            MapPin: (props) => <IconWrapper {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></IconWrapper>,
+            Wrench: (props) => <IconWrapper {...props}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></IconWrapper>,
+            Info: (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></IconWrapper>,
+            Party: (props) => <IconWrapper {...props}><path d="M3 21l18 0"/><path d="M5 21v-14l8 -4l8 4v14"/><path d="M13 13l4 -4"/><path d="M9 13l-4 -4"/></IconWrapper>,
+            Waves: (props) => <IconWrapper {...props}><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></IconWrapper>,
+            Link: (props) => <IconWrapper {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></IconWrapper>,
+            Fullscreen: (props) => <IconWrapper {...props}><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></IconWrapper>,
+            Chat: (props) => <IconWrapper {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></IconWrapper>,
+            X: (props) => <IconWrapper {...props}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconWrapper>,
+            Send: (props) => <IconWrapper {...props}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></IconWrapper>,
+            Bot: (props) => <IconWrapper {...props}><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></IconWrapper>,
+            ExternalLink: (props) => <IconWrapper {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></IconWrapper>
+        };
+
+        // --- DATA ---
+        const PACKAGES = [
+            { id: 'chuyen-sau', name: 'Gói Chuyên Sâu', color: '#FACC15', icon: Icons.Sparkles, desc: 'Vệ sinh toàn diện: Sử dụng đầy đủ thiết bị, làm sạch kỹ mọi chi tiết.' },
+            { id: 'dinh-ky', name: 'Gói Định Kỳ', color: '#3B82F6', icon: Icons.Briefcase, desc: 'Duy trì chuẩn sạch: Tần suất 1-3 tháng/lần tùy khu vực.' },
+            { id: 'sau-xay-dung', name: 'Sau Xây Dựng', color: '#EF4444', icon: Icons.HardHat, desc: 'Hoàn thiện công trình: Xử lý bụi mịn, vôi vữa, sơn bám sau thi công.' },
+            { id: 'du-an-bien', name: 'Dự Án Biển', color: '#0EA5E9', icon: Icons.Waves, desc: 'Giải pháp chuyên biệt cho Resort/Biệt thự biển (chống ăn mòn).' },
+            { id: 've-sinh-xanh', name: 'Vệ Sinh Xanh', color: '#10B981', icon: Icons.Leaf, desc: 'Vệ sinh và khử trùng không hóa chất, an toàn tuyệt đối.' },
+            { id: 'sau-tiec', name: 'Sau Tiệc', color: '#EC4899', icon: Icons.Party, desc: 'Làm sạch và khử trùng, khử mùi nhanh sau sự kiện.' },
+            { id: 'theo-gio', name: 'Theo Giờ', color: '#8B5CF6', icon: Icons.Clock, desc: 'Linh động thiết bị và nhân sự theo nhu cầu thực tế.' }
+        ];
+
+        // Detailed Area Split - [UPDATED] text color will be white via CSS class
+        const AREAS = [
+            { id: 'living', name: 'Phòng Khách / Ngủ', icon: Icons.Home, bg: 'bg-orange-500/10' },
+            { id: 'kitchen', name: 'Khu Vực Bếp', icon: Icons.Utensils, bg: 'bg-red-500/10' },
+            { id: 'toilet', name: 'Toilet', icon: Icons.Bath, bg: 'bg-cyan-500/10' },
+            { id: 'balcony', name: 'Ban công / P.Giặt', icon: Icons.Sun, bg: 'bg-gray-500/10' },
+            { id: 'stairs', name: 'Cầu thang', icon: Icons.TrendingUp, bg: 'bg-blue-500/10' },
+            { id: 'high', name: 'Khu vực trên cao', icon: Icons.Maximize, bg: 'bg-indigo-500/10' },
+            { id: 'glass', name: 'Khung cửa & Kính', icon: Icons.Maximize, bg: 'bg-sky-500/10' },
+            { id: 'sofa', name: 'Thảm / Sofa', icon: Icons.Layers, bg: 'bg-purple-500/10' },
+            { id: 'curtain', name: 'Nệm / Rèm', icon: Icons.Layers, bg: 'bg-pink-500/10' },
+            { id: 'outdoor', name: 'Sân vườn / Ngoài sân', icon: Icons.Sun, bg: 'bg-green-500/10' },
+            { id: 'basement', name: 'Hầm', icon: Icons.HardHat, bg: 'bg-slate-500/10' }
+        ];
+
+        // --- MACHINES (Added description field) ---
+        const MACHINES = [
+            { id: 't11-1', name: 'T 11/1', type: 'Máy hút bụi khô', image: 'https://s1.kaercher-media.com/products/15271980/main/1/d0.jpg', desc: 'Hút bụi bề mặt, hộc tủ, sàn...' },
+            { id: 'br30-4', name: 'BR 30/4 C ADV', type: 'Máy chà sàn liên hợp', image: 'https://s1.kaercher-media.com/products/17832210/main/1/d0.jpg', desc: 'Phun hút và chà sàn diện tích lớn.' },
+            { id: 'bd17-5', name: 'BD 17/5 C', type: 'Máy đánh sàn nhỏ', image: 'https://s1.kaercher-media.com/products/17371070/main/1/d0.jpg', desc: 'Đánh bóng, chà vết bẩn góc hẹp.' },
+            { id: 'bvl5-1', name: 'BVL 5/1 Bp', type: 'Máy hút bụi đeo vai', image: 'https://s1.kaercher-media.com/products/13942700/main/1/d0.jpg', desc: 'Hút bụi cầu thang, trên cao.' },
+            { id: 'sg4-2', name: 'SG 4/2 Classic', type: 'Máy vệ sinh hơi nước nóng', image: 'https://s1.kaercher-media.com/products/10923010/main/1/d0.jpg', desc: 'Diệt khuẩn, tẩy dầu mỡ.' },
+            { id: 'sg4-4', name: 'SG 4/4 Classic', type: 'Máy hơi nước nóng chuyên sâu', image: 'https://s1.kaercher-media.com/products/10921040/main/1/d0.jpg', desc: 'Diệt khuẩn mạnh, áp lực cao.' },
+            { id: 'nt27-1', name: 'NT 27/1', type: 'Máy hút nước nhỏ', image: 'https://s1.kaercher-media.com/products/14285090/main/1/d0.jpg', desc: 'Hút nước thải, chất lỏng.' },
+            { id: 'nt40-1', name: 'NT 40/1 Ap L', type: 'Máy hút bụi mịn', image: 'https://s1.kaercher-media.com/products/11483210/main/1/d0.jpg', desc: 'Hút bụi công nghiệp, bụi mịn.' },
+            { id: 'puzzi', name: 'Puzzi 10/1', type: 'Máy giặt thảm', image: 'https://s1.kaercher-media.com/products/11001300/main/1/d0.jpg', desc: 'Phun hút giặt thảm, sofa.' },
+            { id: 'ab45', name: 'AB 45 Classic', type: 'Máy thổi', image: 'https://s1.kaercher-media.com/products/10040600/main/1/d0.jpg', desc: 'Thổi khô sàn, thảm nhanh.' },
+            { id: 'km70-30', name: 'KM 70/30 C', type: 'Máy quét - hút rác', image: 'https://s1.kaercher-media.com/products/15172110/main/1/d0.jpg', desc: 'Quét rác sân vườn, đường đi.' },
+            { id: 'bds43', name: 'BDS 43/150', type: 'Máy đánh sàn đơn', image: 'https://s1.kaercher-media.com/products/12912470/main/1/d0.jpg', desc: 'Đánh sàn cứng, tẩy vết sâu.' },
+            { id: 'hd5-15', name: 'HD 5/15', type: 'Nước áp lực nhỏ', image: 'https://s1.kaercher-media.com/products/15209300/main/1/d0.jpg', desc: 'Xịt rửa sân, tường rêu mốc.' },
+            { id: 'hd10-25', name: 'HD 10/25 4S', type: 'Nước áp lực lớn', image: 'https://s1.kaercher-media.com/products/12869130/main/1/d0.jpg', desc: 'Xịt rửa công nghiệp 3 pha.' },
+        ];
+
+        // --- DESCRIPTIONS (Area specific) ---
+        const DESCRIPTIONS = {
+            'living_t11-1': 'Hút bụi bề mặt, hộc tủ, sàn...',
+            'living_br30-4': 'Phun hút và chà sàn diện tích lớn.',
+            'living_bd17-5': 'Xử lý vết bẩn tại khu vực nhỏ hẹp.',
+            
+            'kitchen_t11-1': 'Hút bụi bề mặt và hộc tủ, sàn...',
+            'kitchen_br30-4': 'Phun hút chà sàn bếp.',
+            'kitchen_bd17-5': 'Xử lý vết bẩn cứng đầu.',
+            'kitchen_sg4-4': 'Vệ sinh bằng hơi nước nóng và khử trùng.',
+            
+            'toilet_sg4-2': 'Khử trùng, tẩy vết bẩn cứng đầu.',
+            'toilet_bd17-5': 'Xử lý vết bẩn tại khu vực nhỏ hẹp.',
+            'toilet_nt27-1': 'Hút nước sau xử lý bằng máy hơi nước nóng.',
+            
+            'balcony_bd17-5': 'Xử lý vết bẩn tại khu vực nhỏ hẹp.',
+
+            'stairs_bvl5-1': 'Hút bụi cầu thang, lan can và khe hẹp.',
+            'stairs_bd17-5': 'Vệ sinh bậc và mép cầu thang.',
+            
+            'high_bvl5-1': 'Hút bụi khu vực trên cao.',
+
+            'glass_sg4-2': 'Vệ sinh, khử khuẩn khung và kính.',
+            'glass_nt27-1': 'Hút nước khe cửa sau khi xử lý.',
+            
+            'sofa_t11-1': 'Hút bụi bề mặt.',
+            'sofa_puzzi': 'Giặt thảm, sofa chuyên sâu.',
+            'sofa_ab45': 'Thổi khô sau khi xử lý.',
+            
+            'curtain_sg4-2': 'Khử khuẩn, làm mềm sợi vải.',
+            
+            'outdoor_km70-30': 'Quét rác, lá ngoài sân diện tích lớn.',
+            'outdoor_bds43': 'Đánh sàn cứng, tẩy vết sâu.',
+            'outdoor_hd5-15': 'Xịt rửa bằng nước áp lực.',
+            'outdoor_hd10-25': 'Xịt rửa bằng áp lực nước công suất lớn.',
+            'outdoor_bd17-5': 'Vệ sinh góc khu vực ngoài trời.',
+            
+            'basement_bds43': 'Đánh sàn cứng, tẩy vết sâu.',
+            'basement_hd5-15': 'Xịt rửa bằng nước áp lực.',
+            'basement_bd17-5': 'Vệ sinh góc khu vực ngoài trời.'
+        };
+
+        const STANDARD_MAPPING = {
+            'living': ['t11-1', 'br30-4', 'bd17-5'],
+            'kitchen': ['t11-1', 'br30-4', 'bd17-5', 'sg4-4'], 
+            'toilet': ['sg4-2', 'bd17-5', 'nt27-1'], 
+            'balcony': ['bd17-5'],
+            'stairs': ['bvl5-1', 'bd17-5'],
+            'high': ['bvl5-1'],
+            'glass': ['sg4-2', 'nt27-1'],
+            'sofa': ['t11-1', 'puzzi', 'ab45'],
+            'curtain': ['sg4-2'],
+            'outdoor': ['km70-30', 'bds43', 'hd5-15', 'bd17-5'],
+            'basement': ['bds43', 'hd5-15', 'bd17-5']
+        };
+
+        const PERIODIC_FREQUENCIES = {
+            't11-1': 'Hàng tuần', 'br30-4': 'Hàng tuần',
+            'kitchen_bd17-5': '2-3 tháng/lần', 'kitchen_sg4-4': '2-3 tháng/lần',
+            'living_bd17-5': '2-3 tháng/lần', 'toilet_sg4-2': '2-3 tháng/lần',
+            'toilet_bd17-5': '2-3 tháng/lần', 'balcony_bd17-5': '2-3 tháng/lần',
+            'stairs_bvl5-1': '1-2 tháng/lần', 'stairs_bd17-5': '2-3 tháng/lần',
+            'high_bvl5-1': '1-2 tháng/lần', 'glass_sg4-2': '2-3 tháng/lần',
+            'glass_nt27-1': '2-3 tháng/lần', 'textile_sg4-2': '1-2 tháng/lần',
+            'textile_puzzi': '3 tháng/lần', 'textile_ab45': '3 tháng/lần',
+            'outdoor_bds43': '1-3 tháng/lần', 'outdoor_hd5-15': '1-3 tháng/lần',
+            'outdoor_hd10-25': '1-3 tháng/lần', 'outdoor_bd17-5': '1-3 tháng/lần',
+            'outdoor_km70-30': '3 tháng/lần', 'basement_bds43': '1-3 tháng/lần',
+            'basement_hd5-15': '1-3 tháng/lần', 'basement_bd17-5': '1-3 tháng/lần'
+        };
+
+        // --- HIGHLIGHT LOGIC ---
+        const getHighlightMachines = (packageId) => {
+            if (packageId === 'chuyen-sau') return ['sg4-4', 'puzzi', 'bds43', 'hd5-15'];
+            if (packageId === 'dinh-ky') return ['t11-1', 'br30-4'];
+            if (packageId === 'sau-xay-dung') return ['nt40-1'];
+            if (packageId === 've-sinh-xanh') return ['sg4-2', 'sg4-4'];
+            if (packageId === 'sau-tiec') return ['br30-4', 'sg4-2', 'bds43', 'hd5-15'];
+            if (packageId === 'du-an-bien') return ['hd10-25', 'km70-30', 'bds43', 'sg4-2'];
+            return [];
+        };
+
+        // --- LOGIC FUNCTIONS ---
+        const getMachinesForPackage = (packageId, areaId) => {
+            if (!packageId) return STANDARD_MAPPING[areaId] || [];
+            if (packageId === 'theo-gio') return [];
+
+            let machines = [...(STANDARD_MAPPING[areaId] || [])];
+            
+            if (packageId === 'sau-xay-dung') machines = machines.map(m => m === 't11-1' ? 'nt40-1' : m);
+            if (packageId === 'dinh-ky') machines = machines.map(m => m === 'sg4-4' ? 'sg4-2' : m);
+            if (packageId === 've-sinh-xanh') {
+                const allowed = ['sg4-2', 'sg4-4'];
+                machines = machines.filter(m => allowed.includes(m));
+                if (!machines.includes('sg4-2') && !machines.includes('sg4-4')) {
+                    if (['curtain', 'sofa', 'glass', 'toilet', 'kitchen'].includes(areaId)) machines.push('sg4-2');
+                }
+            }
+            if (packageId === 'sau-tiec') {
+                if (['living', 'kitchen', 'toilet'].includes(areaId)) machines = ['br30-4', 'sg4-2'];
+                else if (['outdoor', 'basement'].includes(areaId)) machines = ['bds43', 'hd5-15'];
+                else machines = [];
+            }
+            if (packageId === 'du-an-bien') {
+                if (areaId === 'toilet') machines = ['sg4-2', 'bd17-5'];
+                else if (areaId === 'outdoor') machines = ['km70-30', 'bds43', 'hd5-15', 'hd10-25', 'bd17-5'];
+                else if (areaId === 'basement') machines = ['bds43', 'hd5-15', 'bd17-5']; 
+            }
+            return machines;
+        };
+        
+        const getPackagesUsingMachine = (machineId) => {
+            const results = [];
+            const isStandard = Object.values(STANDARD_MAPPING).some(list => list.includes(machineId));
+            if (isStandard && machineId !== 'nt40-1') results.push('chuyen-sau');
+            if (isStandard && machineId !== 'nt40-1') results.push('dinh-ky');
+            if (machineId === 'sg4-2') results.push('dinh-ky'); 
+            if (machineId === 'nt40-1') results.push('sau-xay-dung');
+            else if (isStandard && machineId !== 't11-1') results.push('sau-xay-dung');
+            if (['sg4-2', 'sg4-4'].includes(machineId)) results.push('ve-sinh-xanh');
+            if (['br30-4', 'sg4-2', 'bds43', 'hd5-15'].includes(machineId)) results.push('sau-tiec');
+            if (isStandard || machineId === 'hd10-25') results.push('du-an-bien');
+            results.push('theo-gio');
+            return [...new Set(results)];
+        };
+
+        const getAreasUsingMachine = (machineId) => {
+            const areasSet = new Set();
+            Object.keys(STANDARD_MAPPING).forEach(areaId => {
+                if (STANDARD_MAPPING[areaId].includes(machineId)) areasSet.add(areaId);
+            });
+            if (machineId === 'nt40-1') Object.keys(STANDARD_MAPPING).forEach(areaId => { if (STANDARD_MAPPING[areaId].includes('t11-1')) areasSet.add(areaId); });
+            if (machineId === 'sg4-2') { areasSet.add('kitchen'); areasSet.add('toilet'); }
+            if (machineId === 'hd10-25') areasSet.add('outdoor');
+            return Array.from(areasSet);
+        };
+
+
+        // --- COMPONENTS ---
+
+        // AI Chat Component
+        const AIChat = () => {
+            const [isOpen, setIsOpen] = useState(false);
+            const [messages, setMessages] = useState([
+                { id: 1, text: "Xin chào! Tôi là trợ lý ảo Karcher. Bạn cần tư vấn về thiết bị hay quy trình nào?", sender: 'bot' }
+            ]);
+            const [input, setInput] = useState('');
+
+            const handleSend = () => {
+                if (!input.trim()) return;
+                
+                setMessages(prev => [...prev, { id: Date.now(), text: input, sender: 'user' }]);
+                
+                // Simulate response
+                setTimeout(() => {
+                    const response = "Tính năng này đang được kết nối với NotebookLM của bạn. Hiện tại đây là bản demo giao diện.";
+                    setMessages(prev => [...prev, { id: Date.now() + 1, text: response, sender: 'bot' }]);
+                }, 1000);
+                
+                setInput('');
+            };
+
+            const handleNotebookLink = () => {
+                window.open('https://notebooklm.google.com/notebook/ddf466f3-ed1c-42ec-b56a-8a069658793e', '_blank');
+            };
+
+            return (
+                <>
+                    {/* Float Button Container */}
+                    <div className="fixed bottom-5 right-5 z-50 flex items-center"> {/* Right Side */}
+                        {/* Link Button */}
+                        <div 
+                            className="absolute -top-1 -left-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md cursor-pointer hover:scale-110 transition-transform z-50"
+                            onClick={(e) => { e.stopPropagation(); handleNotebookLink(); }}
+                            title="Mở NotebookLM"
+                        >
+                            <Icons.ExternalLink size={12} color="#000"/>
+                        </div>
+
+                        {/* Main Chat Button */}
+                        <div 
+                            className={`w-14 h-14 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center shadow-lg cursor-pointer hover:scale-105 transition-transform ${isOpen ? 'scale-0' : 'scale-100'}`}
+                            onClick={() => setIsOpen(true)}
+                        >
+                            <Icons.Chat size={28} color="#000" />
+                        </div>
+                    </div>
+
+                    {/* Chat Window */}
+                    {isOpen && (
+                        <div className="ai-chat-window">
+                            <div className="ai-header">
+                                <div className="flex items-center gap-2">
+                                    <Icons.Bot size={20} />
+                                    <span className="font-bold">Karcher AI Assistant</span>
+                                </div>
+                                <button onClick={() => setIsOpen(false)} className="hover:bg-black/10 p-1 rounded">
+                                    <Icons.X size={20} />
+                                </button>
+                            </div>
+                            
+                            <div className="ai-body custom-scroll">
+                                {messages.map(msg => (
+                                    <div key={msg.id} className={`ai-message ${msg.sender}`}>
+                                        {msg.text}
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="ai-footer flex gap-2">
+                                <input 
+                                    type="text" 
+                                    className="flex-1 bg-transparent border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-yellow-400 text-white placeholder-slate-500"
+                                    placeholder="Nhập câu hỏi..."
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                />
+                                <button 
+                                    onClick={handleSend}
+                                    className="bg-yellow-400 text-black p-2 rounded-lg hover:bg-yellow-500 transition-colors"
+                                >
+                                    <Icons.ArrowRight size={20} />
+                                </button>
+                            </div>
+                            
+                            {/* Link to NotebookLM */}
+                            <div 
+                                className="text-[10px] text-center py-1 text-slate-400 bg-black/20 cursor-pointer hover:text-yellow-400 transition-colors"
+                                onClick={handleNotebookLink}
+                            >
+                                Powered by NotebookLM & Gemini (Click to Open)
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        };
+
+
+        const InfoPanel = ({ machine, activePackage, hoveredArea, allMappings }) => {
+            if (!machine) return null;
+            let freq = null;
+            if (activePackage === 'dinh-ky') {
+                if (hoveredArea) freq = PERIODIC_FREQUENCIES[`${hoveredArea}_${machine.id}`]; 
+                if (!freq) freq = PERIODIC_FREQUENCIES[machine.id]; 
+            }
+             // Updated logic to get descriptions
+             const linkedAreas = AREAS.filter(a => getAreasUsingMachine(machine.id).includes(a.id)).map(a => a.name);
+             const linkedPackages = getPackagesUsingMachine(machine.id).map(pid => PACKAGES.find(p => p.id === pid));
+             const desc = hoveredArea ? (DESCRIPTIONS[`${hoveredArea}_${machine.id}`] || machine.desc) : machine.desc;
+
+            return (
+                <div className="fixed bottom-4 right-20 bg-slate-900/95 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md z-40 w-80 animate-fade-in">
+                    <div className="flex items-center gap-4 mb-4 pb-4 border-b border-slate-700">
+                         <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-2 shrink-0 shadow-lg border-2 border-yellow-400">
+                            <img src={machine.image} className="w-full h-full object-contain" alt={machine.name}/>
+                         </div>
+                         <div>
+                             <h3 className="font-bold text-lg text-accent-yellow leading-tight">{machine.name}</h3>
+                             <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider">{machine.type}</p>
+                         </div>
+                    </div>
+                    
+                    <div className="space-y-3 text-sm">
+                         <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                            <h4 className="text-accent-yellow font-semibold mb-1 text-xs uppercase flex items-center gap-2">
+                                <Icons.Info size={14}/> Chức năng chính
+                            </h4>
+                            <p className="text-slate-300 leading-snug text-xs">{desc}</p>
+                         </div>
+                         
+                         {freq && (
+                            <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-2 flex gap-2 items-center">
+                                <Icons.Clock size={16} className="text-blue-400"/>
+                                <div>
+                                    <span className="text-[10px] font-bold text-blue-300 uppercase block">Tần suất định kỳ</span>
+                                    <span className="text-xs font-semibold text-white">{freq}</span>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Display package/area info in panel with color code */}
+                        {!hoveredArea && (
+                             <>
+                                 <div>
+                                    <h4 className="text-slate-500 font-bold text-[10px] uppercase mb-1 flex items-center gap-1">
+                                        <Icons.Link size={12}/> Khu vực sử dụng
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1">
+                                        {linkedAreas.map(areaName => (
+                                            <span key={areaName} className="text-[10px] bg-slate-700 px-2 py-0.5 rounded-full text-white border border-slate-600">{areaName}</span>
+                                        ))}
+                                    </div>
+                                 </div>
+                                 <div>
+                                    <h4 className="text-slate-500 font-bold text-[10px] uppercase mb-1 flex items-center gap-1">
+                                        <Icons.Briefcase size={12}/> Gói phù hợp
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1">
+                                        {linkedPackages.map(p => (
+                                            <span key={p.id} className="text-[10px] px-2 py-0.5 rounded-full text-slate-900 font-bold border" style={{backgroundColor: 'transparent', color: p.color, borderColor: p.color}}>{p.name}</span>
+                                        ))}
+                                    </div>
+                                 </div>
+                             </>
+                        )}
+                    </div>
+                    <div className="text-[10px] text-slate-600 italic text-center mt-3 pt-2 border-t border-slate-800">
+                        Bấm ra ngoài để đóng
+                    </div>
+                </div>
+            )
+        }
+
+        const ContextualTooltip = ({ area, machines, packageId }) => {
+            if (!area || !machines || machines.length === 0) return null;
+
+            return (
+                <div className="fixed z-50 bg-slate-900 bg-opacity-95 text-white p-4 rounded-lg shadow-2xl max-w-sm pointer-events-none animate-fade-in backdrop-blur-sm border border-slate-700" 
+                     style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
+                    <div className="flex items-center gap-2 mb-3 border-b border-slate-600 pb-2">
+                        <div className="text-yellow-400"><Icons.Info size={20} /></div>
+                        <span className="font-bold text-lg">{area.name.split('/')[0]}...</span>
+                        <span className="text-xs bg-slate-700 px-2 py-0.5 rounded ml-auto text-slate-300">
+                            {PACKAGES.find(p => p.id === packageId)?.name}
+                        </span>
+                    </div>
+                    <div className="space-y-3">
+                        {machines.map(machineId => {
+                            const machine = MACHINES.find(m => m.id === machineId);
+                            if (!machine) return null;
+                            
+                            let desc = DESCRIPTIONS[`${area.id}_${machineId}`];
+                            let freq = null;
+
+                            if (packageId === 'dinh-ky') {
+                                freq = PERIODIC_FREQUENCIES[`${area.id}_${machineId}`] || PERIODIC_FREQUENCIES[machineId];
+                            }
+                            
+                            if (!desc) {
+                                if (machineId === 'nt40-1') desc = 'Hút bụi mịn sau xây dựng.';
+                                else if (machineId === 'sg4-4') desc = 'Vệ sinh hơi nước chuyên sâu.';
+                                else if (machineId === 'sg4-2' && (area.id === 'kitchen' || area.id === 'toilet')) desc = 'Hơi nước khử khuẩn định kỳ.';
+                                else desc = machine.type;
+                            }
+
+                            return (
+                                <div key={machineId} className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-white rounded flex items-center justify-center shrink-0">
+                                        <img src={machine.image} className="w-6 h-6 object-contain" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-accent-yellow text-fluid-sm">{machine.name}</span>
+                                            {freq && <span className="text-[10px] bg-blue-600 px-1.5 py-0.5 rounded text-white">{freq}</span>}
+                                        </div>
+                                        <div className="text-fluid-xs text-slate-300 leading-tight">{desc}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const MachineCard = ({ machine, isConnected, isHighlighted, isSelected, onClick, isFaded, packageId, areaId, isSpecialHighlight }) => {
+            const [imgError, setImgError] = useState(false);
+            useEffect(() => { setImgError(false); }, [machine.id]);
+
+            let frequencyText = null;
+            if (packageId === 'dinh-ky' && areaId && isConnected) {
+                frequencyText = PERIODIC_FREQUENCIES[`${areaId}_${machine.id}`] || PERIODIC_FREQUENCIES[machine.id];
+            }
+
+            return (
+                <div
+                   onClick={onClick}
+                   className={`
+                     machine-card-glass relative flex flex-col items-center text-center p-1.5 rounded-lg cursor-pointer hover-lift
+                     ${isSelected ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)] ring-1 ring-yellow-400 scale-105 z-10' : ''}
+                     ${!isSelected && isConnected ? 'hover:border-blue-400 hover:shadow-lg' : ''}
+                     ${isFaded ? 'opacity-20 grayscale border-transparent bg-transparent' : 'opacity-100 scale-100'}
+                     ${isSpecialHighlight && !isSelected && !isFaded ? 'special-highlight' : ''}
+                   `}
+                   style={{ transition: 'all 0.3s ease' }}
+                 >
+                   <div className="w-full aspect-square bg-white rounded-md p-1 mb-1 flex items-center justify-center relative overflow-hidden">
+                      <div className={`absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-200 opacity-60`}></div>
+                      
+                      {!imgError ? (
+                          <img 
+                            src={machine.image} 
+                            alt={machine.name}
+                            className="w-full h-full object-contain relative z-10 machine-img transition-transform duration-300 hover:scale-110"
+                            onError={() => setImgError(true)}
+                          />
+                      ) : (
+                          <div className="text-slate-300 flex flex-col items-center justify-center z-10">
+                             <Icons.FallbackMachine size={20} />
+                          </div>
+                      )}
+                   </div>
+
+                   <h4 className="font-bold text-machine-code leading-tight truncate w-full px-1">{machine.name}</h4>
+                   <span className="text-machine-name truncate text-slate-400">{machine.type}</span>
+                   
+                   {frequencyText && (
+                       <div className="mt-1 text-[0.8vmin] bg-blue-100 text-blue-800 px-1 py-0.5 rounded font-bold border border-blue-200 shadow-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                           {frequencyText}
+                       </div>
+                   )}
+                 </div>
+            );
+        };
+
+        const App = () => {
+            const [activePackage, setActivePackage] = useState(null); 
+            const [hoveredArea, setHoveredArea] = useState(null);
+            const [selectedMachineId, setSelectedMachineId] = useState(null);
+            const containerRef = useRef(null);
+            const [lines, setLines] = useState([]);
+
+            const toggleFullScreen = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch((e) => console.log(e));
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                }
+            };
+
+            const calculateLines = () => {
+                if (!containerRef.current) return;
+                const newLines = [];
+                const containerRect = containerRef.current.getBoundingClientRect();
+                
+                const machineElements = {}; 
+                MACHINES.forEach(m => {
+                    const el = document.getElementById(`machine-${m.id}`);
+                    if(el) machineElements[m.id] = el;
+                });
+
+                AREAS.forEach(area => {
+                    const areaEl = document.getElementById(`area-${area.id}`);
+                    if (!areaEl) return;
+                    const areaRect = areaEl.getBoundingClientRect();
+                    const startX = areaRect.right - containerRect.left;
+                    const startY = areaRect.top + areaRect.height / 2 - containerRect.top;
+                    
+                    let connectedMachines = [];
+                    let lineColor = '#475569'; 
+                    let lineWidth = 1;
+                    let lineOpacity = 0.1;
+
+                    if (activePackage) {
+                        let machines = getMachinesForPackage(activePackage, area.id);
+                        connectedMachines = machines;
+                        
+                        const pkg = PACKAGES.find(p => p.id === activePackage);
+                        if (hoveredArea === area.id) {
+                            lineColor = pkg.color; 
+                            lineWidth = 2.5;
+                            lineOpacity = 0.9;
+                        } else if (hoveredArea) {
+                            lineOpacity = 0.05;
+                        } else {
+                            // CLEAN MODE: Hide lines when package selected but no area hovered
+                            lineColor = 'transparent';
+                            lineWidth = 0;
+                            lineOpacity = 0;
+                        }
+                        
+                    } else if (selectedMachineId) {
+                        const standardMachines = STANDARD_MAPPING[area.id] || [];
+                        if (standardMachines.includes(selectedMachineId)) {
+                             connectedMachines = [selectedMachineId];
+                             lineColor = '#FACC15'; lineWidth = 3; lineOpacity = 0.9;
+                        } else if (selectedMachineId === 'nt40-1' && standardMachines.includes('t11-1')) {
+                             connectedMachines = ['nt40-1'];
+                             lineColor = '#FACC15'; lineWidth = 3; lineOpacity = 0.9;
+                        }
+                    }
+
+                    connectedMachines.forEach(machineId => {
+                         const machineEl = machineElements[machineId];
+                         if (!machineEl) return;
+                         const machineRect = machineEl.getBoundingClientRect();
+                         const endX = machineRect.left - containerRect.left;
+                         const endY = machineRect.top + machineRect.height / 2 - containerRect.top;
+
+                         let isFlowing = false;
+                         if (activePackage && hoveredArea === area.id) isFlowing = true;
+                         if (selectedMachineId && machineId === selectedMachineId) isFlowing = true;
+
+                         newLines.push({
+                            id: `${area.id}-${machineId}`,
+                            startX, startY, endX, endY,
+                            stroke: lineColor,
+                            width: lineWidth,
+                            opacity: lineOpacity,
+                            isFlowing: isFlowing
+                        });
+                    });
+                });
+                setLines(newLines);
+            };
+
+            useEffect(() => {
+                const timer = setTimeout(calculateLines, 100);
+                window.addEventListener('resize', calculateLines);
+                return () => {
+                    window.removeEventListener('resize', calculateLines);
+                    clearTimeout(timer);
+                };
+            }, [activePackage, hoveredArea, selectedMachineId]);
+
+            const specialHighlights = useMemo(() => {
+                if (activePackage) {
+                    return getHighlightMachines(activePackage);
+                }
+                return [];
+            }, [activePackage]);
+
+            const contextualData = useMemo(() => {
+                if (activePackage && hoveredArea) {
+                    if (activePackage === 'theo-gio') return null;
+                    const areaObj = AREAS.find(a => a.id === hoveredArea);
+                    const machineIds = getMachinesForPackage(activePackage, hoveredArea);
+                    return { area: areaObj, machines: machineIds };
+                }
+                return null;
+            }, [activePackage, hoveredArea]);
+
+            return (
+                <div onClick={() => { setSelectedMachineId(null); setHoveredArea(null); }} className="h-full flex flex-col">
+                    
+                    {/* Header Compact */}
+                    <header className="flex-none px-4 py-2 flex justify-between items-center glass-panel z-50 border-b border-white/10 h-[8vh]">
+                        <div className="flex items-center gap-2">
+                            <div className="karcher-logo-box text-sm"><span>KÄRCHER</span></div>
+                            <h1 className="text-fluid-title font-black tracking-tight text-white uppercase hidden sm:block ml-3">Hệ Thống Thiết Bị Làm Sạch</h1>
+                        </div>
+                        
+                        <div className="flex gap-2 overflow-x-auto custom-scroll mx-4">
+                            {PACKAGES.map((pkg) => {
+                                const isActive = activePackage === pkg.id;
+                                // New logic: Check if selected machine belongs to this package
+                                const isRelated = selectedMachineId && getPackagesUsingMachine(selectedMachineId).includes(pkg.id);
+                                
+                                const Icon = pkg.icon;
+                                return (
+                                    <button
+                                        key={pkg.id}
+                                        onClick={(e) => { e.stopPropagation(); setActivePackage(prev => prev === pkg.id ? null : pkg.id); setSelectedMachineId(null); setHoveredArea(null); }}
+                                        className={`
+                                            flex items-center justify-center gap-1 px-3 rounded-lg border transition-all duration-200 whitespace-nowrap text-[1.4vmin] font-bold uppercase tracking-wide pkg-btn
+                                            ${isActive 
+                                                ? 'bg-blue-600 border-blue-500 text-white shadow-lg scale-105' 
+                                                : isRelated
+                                                    ? 'bg-transparent border-slate-700 hover:border-slate-500' // No bg change
+                                                    : 'bg-slate-800/60 border-slate-600 hover:bg-slate-700'}
+                                        `}
+                                        style={{ 
+                                            // Only change text/icon color for related, keep bg dark
+                                            color: isActive ? '#fff' : (isRelated ? pkg.color : '#94a3b8'), 
+                                            borderColor: isActive ? pkg.color : (isRelated ? pkg.color : '#475569') 
+                                        }}
+                                    >
+                                        <Icon size="1.8vmin" />
+                                        <span>{pkg.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button onClick={toggleFullScreen} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded transition-colors text-slate-400"><Icons.Maximize size="2vmin"/></button>
+                    </header>
+                    
+                    {/* Package Description Bar */}
+                    <div className={`flex-none desc-bar py-1 px-6 text-center h-[4vh] ${activePackage ? '' : 'invisible'}`}>
+                         <span className="text-fluid-pkg font-medium text-accent-yellow">{activePackage && PACKAGES.find(p => p.id === activePackage).desc}</span>
+                    </div>
+
+                    {/* Main Content Grid */}
+                    <div className="flex-1 relative flex overflow-hidden main-content px-6 py-2 gap-8" ref={containerRef}>
+                        
+                        {/* SVG Layer */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                            {lines.map((line, i) => (
+                                <path
+                                    key={i}
+                                    d={`M ${line.startX} ${line.startY} C ${line.startX + 60} ${line.startY}, ${line.endX - 60} ${line.endY}, ${line.endX} ${line.endY}`}
+                                    fill="none"
+                                    stroke={line.stroke}
+                                    strokeWidth={line.width}
+                                    strokeOpacity={line.opacity}
+                                    className={`transition-all duration-300 ${line.isFlowing ? 'flow-line' : ''}`}
+                                />
+                            ))}
+                        </svg>
+
+                        {/* Areas Column (Left) - Adjusted spacing */}
+                        <div className="w-1/4 flex flex-col justify-center gap-[0.5vh] z-10 custom-scroll overflow-y-auto pr-1" onClick={e => e.stopPropagation()}>
+                            <div className="header-row flex items-center justify-start gap-2 px-2 text-blue-300">
+                                <Icons.MapPin size="1.8rem" />
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-white">Khu vực</h3>
+                            </div>
+                            
+                            {AREAS.map((area, index) => {
+                                const Icon = area.icon;
+                                const isDimmed = activePackage && hoveredArea && hoveredArea !== area.id;
+                                const isActive = hoveredArea === area.id;
+                                return (
+                                    <div
+                                        key={area.id}
+                                        id={`area-${area.id}`}
+                                        onMouseEnter={() => activePackage && activePackage !== 'theo-gio' && setHoveredArea(area.id)}
+                                        onMouseLeave={() => activePackage && setHoveredArea(null)}
+                                        className={`
+                                            group relative px-2 py-1.5 rounded border transition-all duration-200 cursor-default flex items-center justify-between
+                                            ${isActive ? 'bg-blue-900/40 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] translate-x-1 area-selected' : 'bg-slate-800/40 border-slate-700 hover:bg-slate-800/60'}
+                                            ${isDimmed ? 'opacity-20 blur-[0.5px]' : 'opacity-100'}
+                                        `}
+                                        style={{ height: '6.5vh' }} 
+                                    >
+                                        <div className="flex items-center gap-2 w-full">
+                                            <div className={`p-1 rounded ${isActive ? 'bg-blue-600 text-white' : 'bg-slate-700/50 text-slate-400'}`}>
+                                                <Icon size="2.2vmin" />
+                                            </div>
+                                            <span className={`text-[1.3vmin] font-bold uppercase tracking-wide truncate ${isActive ? 'text-accent-yellow' : 'text-white'}`}>{area.name}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Machines Grid (Right) - 6 Columns */}
+                        <div className="w-3/4 flex flex-col z-10 pl-4 h-full">
+                             <div className="header-row flex items-center gap-2 px-2 text-blue-300">
+                                <Icons.Wrench size="1.8rem" />
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-white">Thiết bị tương ứng</h3>
+                           </div>
+                           
+                            <div className="flex-1 overflow-y-auto custom-scroll pr-2 pb-2">
+                                {/* Changed to grid-cols-6 */}
+                                <div className="grid grid-cols-6 gap-4 w-full">
+                                    {MACHINES.map((machine) => {
+                                        let isConnected = lines.some(l => l.endX > 0 && l.id.includes(machine.id) && l.opacity > 0.1);
+                                        if(!activePackage && !selectedMachineId) isConnected = true;
+                                        if(activePackage === 'theo-gio') isConnected = true;
+
+                                        // New logic: if package active, show machines used in that package, even if not lines
+                                        if (activePackage && !hoveredArea) {
+                                             const pkgs = getPackagesUsingMachine(machine.id);
+                                             if (pkgs.includes(activePackage)) isConnected = true;
+                                             else isConnected = false;
+                                        }
+
+                                        let isFaded = !isConnected;
+                                        const isSelected = selectedMachineId === machine.id;
+                                        const isSpecialHighlight = activePackage && specialHighlights.includes(machine.id);
+
+                                        return (
+                                            <div 
+                                                key={machine.id} 
+                                                id={`machine-${machine.id}`}
+                                                onClick={(e) => { e.stopPropagation(); setActivePackage(null); setSelectedMachineId(machine.id); }}
+                                            >
+                                                <MachineCard 
+                                                    machine={machine} 
+                                                    isConnected={isConnected} 
+                                                    isFaded={isFaded}
+                                                    isSelected={isSelected}
+                                                    packageId={activePackage}
+                                                    areaId={hoveredArea}
+                                                    isSpecialHighlight={isSpecialHighlight && isConnected && !hoveredArea} 
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    {selectedMachineId && <InfoPanel machine={MACHINES.find(m => m.id === selectedMachineId)} activePackage={activePackage} hoveredArea={hoveredArea} allMappings={STANDARD_MAPPING} />}
+                    {contextualData && <ContextualTooltip {...contextualData} packageId={activePackage} />}
+                    
+                    {/* Karcher AI Assistant Button - Right Side */}
+                    <AIChat />
+                    <button 
+                        onClick={toggleFullScreen} 
+                        className="fixed bottom-5 left-5 z-50 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-400 transition-colors border border-slate-700"
+                        title="Toàn màn hình"
+                    >
+                        <Icons.Maximize size="24" />
+                    </button>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
